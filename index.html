@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Isabel is Working — Asana Task Manager</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Architects+Daughter&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --asana-pink: #F06A6A;
+  --asana-coral: #FF5263;
+  --sidebar: #1E1F26;
+  --bg: #F5F5F3;
+  --white: #FFFFFF;
+  --border: #E8E8E6;
+  --text: #1E1F26;
+  --muted: #8C8C8C;
+  --green: #37C27C;
+  --yellow: #F8D74A;
+  --blue: #4285F4;
+  --hole: #2a1f1f;
+}
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  min-height: 100vh;
+  overflow: hidden;
+  user-select: none;
+}
+
+/* ---- SIDEBAR ---- */
+.sidebar {
+  position: fixed;
+  left: 0; top: 0; bottom: 0;
+  width: 220px;
+  background: var(--sidebar);
+  display: flex;
+  flex-direction: column;
+  padding: 20px 0;
+  z-index: 10;
+}
+
+.sidebar-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 20px 20px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  margin-bottom: 16px;
+}
+
+.logo-dots {
+  display: flex;
+  gap: 3px;
+}
+.logo-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+}
+.logo-dot:nth-child(1) { background: var(--asana-pink); }
+.logo-dot:nth-child(2) { background: var(--asana-pink); opacity: 0.6; }
+.logo-dot:nth-child(3) { background: var(--asana-pink); opacity: 0.3; }
+
+.logo-text {
+  color: white;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 20px;
+  color: rgba(255,255,255,0.5);
+  font-size: 13.5px;
+  cursor: default;
+  border-radius: 6px;
+  margin: 0 8px;
+  transition: background 0.15s;
+}
+.sidebar-item.active {
+  background: rgba(255,255,255,0.1);
+  color: white;
+}
+.sidebar-item .icon { font-size: 15px; width: 18px; text-align: center; }
+
+.sidebar-section {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(255,255,255,0.25);
+  padding: 16px 20px 6px;
+}
+
+.sidebar-status {
+  margin-top: auto;
+  padding: 16px 20px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.avatar {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #F06A6A, #FF8C00);
+  display: flex; align-items: center; justify-content: center;
+  color: white; font-size: 11px; font-weight: 700;
+}
+.avatar-name { color: rgba(255,255,255,0.7); font-size: 12px; }
+.status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); margin-left: auto; }
+
+/* ---- MAIN ---- */
+.main {
+  margin-left: 220px;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Top bar */
+.topbar {
+  background: var(--white);
+  border-bottom: 1px solid var(--border);
+  padding: 0 28px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+.topbar-title {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: -0.02em;
+}
+.topbar-right { display: flex; align-items: center; gap: 12px; }
+.score-display {
+  font-size: 13px;
+  color: var(--muted);
+  font-weight: 500;
+}
+.score-num {
+  font-weight: 700;
+  color: var(--asana-coral);
+  font-size: 16px;
+  transition: transform 0.1s;
+}
+.score-num.pop { transform: scale(1.4); }
+
+.highscore-display {
+  font-size: 12px;
+  color: var(--muted);
+  padding: 4px 10px;
+  background: var(--bg);
+  border-radius: 20px;
+  border: 1px solid var(--border);
+}
+
+.start-btn {
+  background: var(--asana-coral);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 18px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+}
+.start-btn:hover { background: #e0414f; transform: translateY(-1px); }
+.start-btn:active { transform: translateY(0); }
+
+/* Tabs */
+.tabs {
+  background: var(--white);
+  border-bottom: 1px solid var(--border);
+  padding: 0 28px;
+  display: flex;
+  gap: 0;
+  flex-shrink: 0;
+}
+.tab {
+  padding: 12px 16px;
+  font-size: 13px;
+  color: var(--muted);
+  cursor: default;
+  border-bottom: 2px solid transparent;
+  display: flex; align-items: center; gap: 6px;
+}
+.tab.active { color: var(--asana-coral); border-bottom-color: var(--asana-coral); font-weight: 600; }
+
+/* Timer bar */
+.timer-bar-wrap {
+  height: 4px;
+  background: var(--border);
+  flex-shrink: 0;
+  position: relative;
+}
+.timer-bar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--green), var(--yellow), var(--asana-coral));
+  transition: width 0.5s linear;
+  width: 100%;
+}
+
+/* GAME BOARD */
+.board {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  background: var(--bg);
+  background-image:
+    linear-gradient(rgba(0,0,0,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,0,0,0.03) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+/* Start screen */
+.start-screen {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 16px;
+  z-index: 20;
+}
+.start-card {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 40px 48px;
+  text-align: center;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+  max-width: 400px;
+}
+.start-card h2 {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 8px;
+  letter-spacing: -0.03em;
+}
+.start-card p {
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.6;
+  margin-bottom: 24px;
+}
+.start-card .big-btn {
+  background: var(--asana-coral);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 14px 36px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+  width: 100%;
+}
+.start-card .big-btn:hover { background: #e0414f; transform: translateY(-2px); box-shadow: 0 8px 20px rgba(240,106,106,0.3); }
+
+.start-card .tip {
+  margin-top: 16px;
+  font-size: 12px;
+  color: var(--muted);
+  font-style: italic;
+}
+
+/* Game over */
+.gameover-screen {
+  display: none;
+  position: absolute; inset: 0;
+  background: rgba(245,245,243,0.92);
+  backdrop-filter: blur(4px);
+  align-items: center; justify-content: center;
+  z-index: 20;
+}
+.gameover-screen.show { display: flex; }
+.gameover-card {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 40px 48px;
+  text-align: center;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+}
+.gameover-card h2 { font-size: 24px; font-weight: 700; letter-spacing: -0.03em; color: var(--text); margin-bottom: 6px; }
+.gameover-card .final-score { font-size: 56px; font-weight: 700; color: var(--asana-coral); line-height: 1; margin: 12px 0; }
+.gameover-card .label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
+.gameover-card .pb { color: var(--green); font-size: 14px; font-weight: 600; margin: 8px 0 20px; min-height: 20px; }
+
+/* TASK CARDS (moles) */
+.task-card {
+  position: absolute;
+  width: 220px;
+  background: white;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 14px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  cursor: pointer;
+  transform: translateY(120%) scale(0.9);
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s;
+  opacity: 0;
+  z-index: 5;
+}
+.task-card.visible {
+  transform: translateY(0) scale(1);
+  opacity: 1;
+}
+.task-card.hit {
+  transform: translateY(30%) scale(0.8) rotate(-5deg);
+  opacity: 0;
+  transition: transform 0.2s ease-in, opacity 0.2s;
+  pointer-events: none;
+}
+.task-card.escape {
+  transform: translateY(-120%) scale(0.9);
+  opacity: 0;
+  transition: transform 0.3s ease-in, opacity 0.3s;
+  pointer-events: none;
+}
+.task-card:hover:not(.hit):not(.escape) {
+  border-color: var(--asana-coral);
+  box-shadow: 0 4px 20px rgba(240,106,106,0.2);
+}
+
+.task-header {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
+}
+.task-checkbox {
+  width: 16px; height: 16px;
+  border: 2px solid var(--border);
+  border-radius: 3px;
+  flex-shrink: 0;
+  transition: all 0.2s;
+  display: flex; align-items: center; justify-content: center;
+}
+.task-card:hover .task-checkbox { border-color: var(--asana-coral); }
+.task-checkbox.checked { background: var(--green); border-color: var(--green); }
+.task-checkbox.checked::after { content: '✓'; color: white; font-size: 10px; font-weight: 700; }
+
+.task-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.3;
+}
+.task-meta {
+  display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px;
+}
+.task-tag {
+  font-size: 10px;
+  padding: 2px 7px;
+  border-radius: 20px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+.tag-urgent { background: #FFEAEA; color: #CC2929; }
+.tag-review { background: #EAF0FF; color: #2952CC; }
+.tag-today  { background: #FFF4EA; color: #CC6F29; }
+.tag-blocked { background: #F5EAFF; color: #7229CC; }
+.tag-asap { background: #EAFFF5; color: #297A4C; }
+
+.task-assignee {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 6px;
+  display: flex; align-items: center; gap: 5px;
+}
+.mini-avatar {
+  width: 16px; height: 16px; border-radius: 50%;
+  background: linear-gradient(135deg, #F06A6A, #FF8C00);
+  display: flex; align-items: center; justify-content: center;
+  color: white; font-size: 8px; font-weight: 700;
+}
+
+.task-timer-bar {
+  height: 2px;
+  background: var(--border);
+  border-radius: 2px;
+  margin-top: 10px;
+  overflow: hidden;
+}
+.task-timer-fill {
+  height: 100%;
+  background: var(--green);
+  border-radius: 2px;
+  transition: width 0.1s linear, background 0.5s;
+}
+
+/* MISS flash */
+.miss-flash {
+  position: fixed; inset: 0;
+  background: rgba(240,106,106,0.15);
+  pointer-events: none;
+  z-index: 50;
+  opacity: 0;
+  transition: opacity 0.1s;
+}
+.miss-flash.show { opacity: 1; }
+
+/* HIT particles */
+.particle {
+  position: absolute;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--green);
+  font-family: 'DM Sans', sans-serif;
+  pointer-events: none;
+  animation: floatUp 0.8s ease-out forwards;
+  z-index: 30;
+  white-space: nowrap;
+}
+@keyframes floatUp {
+  0% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(-50px) scale(0.8); }
+}
+
+/* Escaped label */
+.escaped-label {
+  position: absolute;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--asana-coral);
+  pointer-events: none;
+  animation: floatUp 0.8s ease-out forwards;
+  z-index: 30;
+}
+
+/* Panic mode */
+body.panic .board {
+  animation: shake 0.3s infinite;
+}
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-3px); }
+  75% { transform: translateX(3px); }
+}
+
+/* Combo badge */
+.combo-badge {
+  position: fixed;
+  top: 70px; right: 24px;
+  background: var(--asana-coral);
+  color: white;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 6px 14px;
+  border-radius: 20px;
+  z-index: 100;
+  opacity: 0;
+  transform: translateY(-10px) scale(0.9);
+  transition: all 0.2s;
+  pointer-events: none;
+}
+.combo-badge.show { opacity: 1; transform: translateY(0) scale(1); }
+</style>
+</head>
+<body>
+
+<div class="miss-flash" id="missFlash"></div>
+<div class="combo-badge" id="comboBadge">🔥 COMBO x2</div>
+
+<!-- Sidebar -->
+<div class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-dots">
+      <div class="logo-dot"></div>
+      <div class="logo-dot"></div>
+      <div class="logo-dot"></div>
+    </div>
+    <span class="logo-text">Asana</span>
+  </div>
+  <div class="sidebar-item active"><span class="icon">🏠</span> Home</div>
+  <div class="sidebar-item"><span class="icon">📬</span> My Tasks</div>
+  <div class="sidebar-item"><span class="icon">📥</span> Inbox <span style="margin-left:auto;background:#F06A6A;color:white;font-size:10px;font-weight:700;padding:1px 6px;border-radius:20px;">47</span></div>
+  <div class="sidebar-section">Projects</div>
+  <div class="sidebar-item"><span class="icon">📋</span> Q4 Roadmap</div>
+  <div class="sidebar-item"><span class="icon">🚀</span> Launch Prep</div>
+  <div class="sidebar-item"><span class="icon">🐛</span> Bug Triage</div>
+  <div class="sidebar-item"><span class="icon">💼</span> Isabel's Tasks</div>
+  <div class="sidebar-status">
+    <div class="avatar">I</div>
+    <span class="avatar-name">Isabel</span>
+    <div class="status-dot"></div>
+  </div>
+</div>
+
+<!-- Main -->
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-title">Isabel's Tasks <span style="color:var(--muted);font-weight:400;font-size:13px;margin-left:8px;">— Q4 Sprint</span></div>
+    <div class="topbar-right">
+      <div class="score-display">Score: <span class="score-num" id="scoreNum">0</span></div>
+      <div class="highscore-display">🏆 Best: <span id="highscoreNum">0</span></div>
+      <button class="start-btn" id="shareBtn" onclick="copyLink()" style="display:none;background:#1E1F26;">🔗 Share Game</button>
+      <button class="start-btn" id="shareBtn" onclick="copyLink()" style="display:none;background:#1E1F26;">🔗 Share Game</button>
+      <button class="start-btn" id="topStartBtn" onclick="startGame()" style="display:none;">↺ Restart</button>
+    </div>
+  </div>
+  <div class="tabs">
+    <div class="tab active">📝 List</div>
+    <div class="tab">📅 Timeline</div>
+    <div class="tab">📊 Board</div>
+    <div class="tab">📈 Dashboard</div>
+  </div>
+  <div class="timer-bar-wrap">
+    <div class="timer-bar" id="timerBar"></div>
+  </div>
+
+  <!-- Board -->
+  <div class="board" id="board">
+
+    <!-- Start screen -->
+    <div class="start-screen" id="startScreen">
+      <div class="start-card">
+        <h2>👩‍💻 Isabel is Working</h2>
+        <p>Tasks keep jumping out of Asana. Click them before they escape to mark them complete!<br><br>
+        Don't let too many get away — Isabel's performance review is on the line.</p>
+        <button class="big-btn" onclick="startGame()">Start Sprinting 🚀</button>
+        <p class="tip">Pro tip: Use your actual Asana for actual work.<br>This is just for stress relief.</p>
+      </div>
+    </div>
+
+    <!-- Game over screen -->
+    <div class="gameover-screen" id="gameoverScreen">
+      <div class="gameover-card">
+        <h2>Sprint Ended 😮‍💨</h2>
+        <div class="label">Tasks Completed</div>
+        <div class="final-score" id="finalScore">0</div>
+        <div class="pb" id="pbLabel"></div>
+        <button class="big-btn" style="background:var(--asana-coral);color:white;border:none;border-radius:8px;padding:14px 36px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:700;cursor:pointer;width:100%;margin-bottom:10px;" onclick="startGame()">New Sprint 🔄</button>
+        <button class="big-btn" onclick="shareScore()" style="background:#1E1F26;color:white;border:none;border-radius:8px;padding:12px 36px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;width:100%;transition:background 0.15s;" onmouseover="this.style.background='#333'" onmouseout="this.style.background='#1E1F26'">📤 Share My Score</button>
+        <div id="shareConfirm" style="display:none;margin-top:10px;font-size:12px;color:#37C27C;font-weight:600;text-align:center;">✓ Copied to clipboard!</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const TASKS = [
+  { name: "Sync with stakeholders re: the sync", tags: ["today"], assignee: "Isabel" },
+  { name: "Circle back on the circle-back", tags: ["review"], assignee: "Isabel" },
+  { name: "Update Asana with Asana tasks", tags: ["asap"], assignee: "Isabel" },
+  { name: "Action the action items from last week's actions", tags: ["urgent"], assignee: "Isabel" },
+  { name: "Schedule a meeting to plan the meetings", tags: ["today","blocked"], assignee: "Isabel" },
+  { name: "Move needle on strategic needle-moving", tags: ["urgent"], assignee: "Isabel" },
+  { name: "Touch base with everyone to touch base", tags: ["review"], assignee: "Isabel" },
+  { name: "Ideate on ideation process improvements", tags: ["asap"], assignee: "Isabel" },
+  { name: "Write EOD update about writing the EOD update", tags: ["today"], assignee: "Isabel" },
+  { name: "Align team on alignment strategy", tags: ["urgent","review"], assignee: "Isabel" },
+  { name: "Create template for creating templates", tags: ["asap"], assignee: "Isabel" },
+  { name: "Reply to reply-all chain asking to remove from chain", tags: ["urgent"], assignee: "Isabel" },
+  { name: "Ping re: the ping that wasn't replied to", tags: ["today"], assignee: "Isabel" },
+  { name: "Reschedule the rescheduled rescheduling", tags: ["blocked"], assignee: "Isabel" },
+  { name: "Deep dive into shallow overview", tags: ["review"], assignee: "Isabel" },
+  { name: "Leverage synergies (undefined)", tags: ["asap"], assignee: "Isabel" },
+  { name: "Follow up on following up", tags: ["urgent"], assignee: "Isabel" },
+  { name: "Document undocumented documentation", tags: ["today"], assignee: "Isabel" },
+  { name: "Optimize optimization workflow", tags: ["review","asap"], assignee: "Isabel" },
+  { name: "Add this task to Asana", tags: ["urgent"], assignee: "Isabel" },
+  { name: "Attend standup about standups", tags: ["today"], assignee: "Isabel" },
+  { name: "Take notes on note-taking best practices", tags: ["review"], assignee: "Isabel" },
+  { name: "Escalate the de-escalation request", tags: ["urgent","blocked"], assignee: "Isabel" },
+  { name: "Reach out to person who reached out", tags: ["today"], assignee: "Isabel" },
+  { name: "Put 'low priority' tasks in high priority queue", tags: ["asap"], assignee: "Isabel" },
+  { name: "Investigate why nothing gets done", tags: ["blocked"], assignee: "Isabel" },
+  { name: "Submit OKR update (OKRs TBD)", tags: ["urgent"], assignee: "Isabel" },
+  { name: "Review PR to review PR process", tags: ["review"], assignee: "Isabel" },
+];
+
+const TAG_STYLES = {
+  urgent: 'tag-urgent',
+  review: 'tag-review',
+  today: 'tag-today',
+  blocked: 'tag-blocked',
+  asap: 'tag-asap',
+};
+
+const TAG_LABELS = {
+  urgent: '🔴 Urgent',
+  review: '🔵 In Review',
+  today: '🟠 Due Today',
+  blocked: '🟣 Blocked',
+  asap: '🟢 ASAP',
+};
+
+let score = 0;
+let highScore = parseInt(localStorage.getItem('isabelHighScore') || '0');
+let gameActive = false;
+let gameDuration = 45000;
+let gameStart = 0;
+let activeCards = [];
+let spawnInterval, timerInterval;
+let missed = 0;
+let combo = 0;
+let comboTimeout;
+
+const board = document.getElementById('board');
+const scoreNum = document.getElementById('scoreNum');
+const highscoreNum = document.getElementById('highscoreNum');
+const timerBar = document.getElementById('timerBar');
+const startScreen = document.getElementById('startScreen');
+const gameoverScreen = document.getElementById('gameoverScreen');
+const finalScore = document.getElementById('finalScore');
+const pbLabel = document.getElementById('pbLabel');
+const topStartBtn = document.getElementById('topStartBtn');
+const comboBadge = document.getElementById('comboBadge');
+
+highscoreNum.textContent = highScore;
+
+// Sound synthesis
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let ctx;
+function getCtx() { if (!ctx) ctx = new AudioCtx(); return ctx; }
+
+function playHit() {
+  try {
+    const c = getCtx();
+    const o = c.createOscillator();
+    const g = c.createGain();
+    o.connect(g); g.connect(c.destination);
+    o.type = 'sine';
+    o.frequency.setValueAtTime(600, c.currentTime);
+    o.frequency.exponentialRampToValueAtTime(900, c.currentTime + 0.08);
+    g.gain.setValueAtTime(0.3, c.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, c.currentTime + 0.2);
+    o.start(); o.stop(c.currentTime + 0.2);
+  } catch(e) {}
+}
+
+function playMiss() {
+  try {
+    const c = getCtx();
+    const o = c.createOscillator();
+    const g = c.createGain();
+    o.connect(g); g.connect(c.destination);
+    o.type = 'sawtooth';
+    o.frequency.setValueAtTime(220, c.currentTime);
+    o.frequency.exponentialRampToValueAtTime(110, c.currentTime + 0.3);
+    g.gain.setValueAtTime(0.15, c.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, c.currentTime + 0.3);
+    o.start(); o.stop(c.currentTime + 0.3);
+  } catch(e) {}
+}
+
+function playCombo() {
+  try {
+    const c = getCtx();
+    [800, 1000, 1200].forEach((freq, i) => {
+      const o = c.createOscillator();
+      const g = c.createGain();
+      o.connect(g); g.connect(c.destination);
+      o.type = 'sine';
+      o.frequency.value = freq;
+      g.gain.setValueAtTime(0, c.currentTime + i * 0.07);
+      g.gain.linearRampToValueAtTime(0.2, c.currentTime + i * 0.07 + 0.03);
+      g.gain.exponentialRampToValueAtTime(0.001, c.currentTime + i * 0.07 + 0.15);
+      o.start(c.currentTime + i * 0.07);
+      o.stop(c.currentTime + i * 0.07 + 0.15);
+    });
+  } catch(e) {}
+}
+
+function startGame() {
+  // Clear old cards
+  document.querySelectorAll('.task-card').forEach(c => c.remove());
+  document.querySelectorAll('.particle').forEach(c => c.remove());
+  activeCards = [];
+  score = 0; missed = 0; combo = 0;
+  scoreNum.textContent = '0';
+  gameoverScreen.classList.remove('show');
+  startScreen.style.display = 'none';
+  topStartBtn.style.display = 'flex';
+  document.getElementById('shareBtn').style.display = 'flex';
+  timerBar.style.width = '100%';
+  timerBar.style.transition = 'none';
+  document.body.classList.remove('panic');
+  gameActive = true;
+  gameStart = Date.now();
+
+  clearInterval(spawnInterval);
+  clearInterval(timerInterval);
+
+  // Spawn tasks
+  let spawnDelay = 1400;
+  function scheduleSpawn() {
+    spawnInterval = setTimeout(() => {
+      if (!gameActive) return;
+      spawnTask();
+      const elapsed = Date.now() - gameStart;
+      const progress = Math.min(elapsed / gameDuration, 1);
+      spawnDelay = Math.max(600, 1400 - progress * 800);
+      scheduleSpawn();
+    }, spawnDelay);
+  }
+  scheduleSpawn();
+
+  // Timer
+  setTimeout(() => { timerBar.style.transition = `width ${gameDuration}ms linear`; timerBar.style.width = '0%'; }, 50);
+
+  // Panic mode at 10s left
+  setTimeout(() => { if (gameActive) document.body.classList.add('panic'); }, gameDuration - 10000);
+
+  setTimeout(endGame, gameDuration);
+}
+
+function getRandomTask() {
+  return TASKS[Math.floor(Math.random() * TASKS.length)];
+}
+
+function spawnTask() {
+  if (!gameActive) return;
+  if (activeCards.length >= 6) return;
+
+  const boardRect = board.getBoundingClientRect();
+  const cardW = 220, cardH = 130;
+  const margin = 20;
+
+  const x = margin + Math.random() * (boardRect.width - cardW - margin * 2);
+  const y = margin + Math.random() * (boardRect.height - cardH - margin * 2);
+
+  const taskData = getRandomTask();
+  const lifespan = 2500 + Math.random() * 1500;
+
+  const card = document.createElement('div');
+  card.className = 'task-card';
+  card.style.left = x + 'px';
+  card.style.top = y + 'px';
+
+  const tagsHtml = taskData.tags.map(t =>
+    `<span class="task-tag ${TAG_STYLES[t]}">${TAG_LABELS[t]}</span>`
+  ).join('');
+
+  card.innerHTML = `
+    <div class="task-header">
+      <div class="task-checkbox" id="cb_${Date.now()}"></div>
+      <div class="task-name">${taskData.name}</div>
+    </div>
+    <div class="task-meta">${tagsHtml}</div>
+    <div class="task-assignee"><div class="mini-avatar">I</div> Isabel · Due today</div>
+    <div class="task-timer-bar"><div class="task-timer-fill" style="width:100%;"></div></div>
+  `;
+
+  board.appendChild(card);
+
+  // Animate in
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => { card.classList.add('visible'); });
+  });
+
+  const fill = card.querySelector('.task-timer-fill');
+  const startTime = Date.now();
+
+  // Shrink timer bar
+  const timerTick = setInterval(() => {
+    if (!gameActive) { clearInterval(timerTick); return; }
+    const elapsed = Date.now() - startTime;
+    const pct = Math.max(0, 100 - (elapsed / lifespan) * 100);
+    fill.style.width = pct + '%';
+    fill.style.background = pct > 50 ? '#37C27C' : pct > 20 ? '#F8D74A' : '#F06A6A';
+  }, 50);
+
+  // Escape timeout
+  const escapeTimeout = setTimeout(() => {
+    if (!card.isConnected || card.classList.contains('hit')) return;
+    clearInterval(timerTick);
+    card.classList.remove('visible');
+    card.classList.add('escape');
+    missed++;
+    playMiss();
+    combo = 0;
+
+    // Flash
+    const flash = document.getElementById('missFlash');
+    flash.classList.add('show');
+    setTimeout(() => flash.classList.remove('show'), 150);
+
+    // Escaped label
+    const lbl = document.createElement('div');
+    lbl.className = 'escaped-label';
+    lbl.textContent = '📤 Escaped!';
+    lbl.style.left = (x + 60) + 'px';
+    lbl.style.top = (y) + 'px';
+    board.appendChild(lbl);
+    setTimeout(() => lbl.remove(), 800);
+
+    setTimeout(() => { card.remove(); activeCards = activeCards.filter(c => c !== card); }, 300);
+  }, lifespan);
+
+  card.addEventListener('click', () => {
+    if (card.classList.contains('hit') || card.classList.contains('escape')) return;
+    clearInterval(timerTick);
+    clearTimeout(escapeTimeout);
+
+    card.querySelector('.task-checkbox').classList.add('checked');
+    card.classList.remove('visible');
+    card.classList.add('hit');
+
+    combo++;
+    const points = combo >= 3 ? 2 : 1;
+    score += points;
+    scoreNum.textContent = score;
+    scoreNum.classList.add('pop');
+    setTimeout(() => scoreNum.classList.remove('pop'), 150);
+
+    playHit();
+
+    if (combo >= 3) {
+      playCombo();
+      showCombo(combo);
+    }
+
+    // Particle
+    const p = document.createElement('div');
+    p.className = 'particle';
+    p.textContent = combo >= 3 ? `+${points} 🔥` : `+${points} ✓ Done!`;
+    p.style.left = (x + 60) + 'px';
+    p.style.top = (y) + 'px';
+    board.appendChild(p);
+    setTimeout(() => p.remove(), 800);
+
+    setTimeout(() => { card.remove(); activeCards = activeCards.filter(c => c !== card); }, 300);
+  });
+
+  activeCards.push(card);
+}
+
+function showCombo(n) {
+  comboBadge.textContent = `🔥 COMBO x${n}`;
+  comboBadge.classList.add('show');
+  clearTimeout(comboTimeout);
+  comboTimeout = setTimeout(() => comboBadge.classList.remove('show'), 1500);
+}
+
+function endGame() {
+  gameActive = false;
+  clearInterval(spawnInterval);
+  document.body.classList.remove('panic');
+
+  // Remove remaining cards
+  document.querySelectorAll('.task-card').forEach(c => {
+    c.classList.remove('visible');
+    c.classList.add('escape');
+  });
+
+  finalScore.textContent = score;
+
+  let pb = '';
+  if (score > highScore) {
+    highScore = score;
+    localStorage.setItem('isabelHighScore', highScore);
+    highscoreNum.textContent = highScore;
+    pb = '🏆 New personal best!';
+  } else if (score === highScore && score > 0) {
+    pb = '🎯 Matched your best!';
+  } else {
+    pb = `Best is ${highScore} — keep sprinting!`;
+  }
+  pbLabel.textContent = pb;
+
+  gameoverScreen.classList.add('show');
+}
+
+function shareScore() {
+  const msg = `👩‍💻 Isabel is Working — I just completed ${score} tasks in Asana before they escaped! Can you beat me?\n\nPlay here: ${location.href}`;
+  navigator.clipboard.writeText(msg).then(() => {
+    const confirm = document.getElementById('shareConfirm');
+    confirm.style.display = 'block';
+    setTimeout(() => confirm.style.display = 'none', 2500);
+  }).catch(() => {
+    prompt('Copy this to share:', msg);
+  });
+}
+
+function copyLink() {
+  navigator.clipboard.writeText(location.href).then(() => {
+    const btn = document.getElementById('shareBtn');
+    const orig = btn.textContent;
+    btn.textContent = '✓ Copied!';
+    btn.style.background = '#37C27C';
+    setTimeout(() => { btn.textContent = orig; btn.style.background = '#1E1F26'; }, 2000);
+  }).catch(() => {
+    prompt('Copy this link to share the game:', location.href);
+  });
+}
+</script>
+</body>
+</html>
