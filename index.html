@@ -526,8 +526,8 @@ body.panic .board {
     <div class="start-screen" id="startScreen">
       <div class="start-card">
         <h2>👩‍💻 Isabel is Working</h2>
-        <p>Tasks keep jumping out of Asana. Click them before they escape to mark them complete!<br><br>
-        Don't let too many get away — Isabel's performance review is on the line.</p>
+        <p>Tasks keep jumping out of Asana. Click them before they escape!<br><br>
+        It starts manageable. It will not stay manageable.<br>Isabel's performance review is on the line.</p>
         <button class="big-btn" onclick="startGame()">Start Sprinting 🚀</button>
         <p class="tip">Pro tip: Use your actual Asana for actual work.<br>This is just for stress relief.</p>
       </div>
@@ -695,14 +695,19 @@ function startGame() {
   clearInterval(timerInterval);
 
   // Spawn tasks
-  let spawnDelay = 1400;
+  let spawnDelay = 1200;
   function scheduleSpawn() {
     spawnInterval = setTimeout(() => {
       if (!gameActive) return;
       spawnTask();
+      // Occasionally spawn a BURST of extra tasks in the second half
       const elapsed = Date.now() - gameStart;
       const progress = Math.min(elapsed / gameDuration, 1);
-      spawnDelay = Math.max(600, 1400 - progress * 800);
+      if (progress > 0.4 && Math.random() < 0.25) {
+        setTimeout(spawnTask, 150);
+        setTimeout(spawnTask, 300);
+      }
+      spawnDelay = Math.max(350, 1200 - progress * 850);
       scheduleSpawn();
     }, spawnDelay);
   }
@@ -711,8 +716,8 @@ function startGame() {
   // Timer
   setTimeout(() => { timerBar.style.transition = `width ${gameDuration}ms linear`; timerBar.style.width = '0%'; }, 50);
 
-  // Panic mode at 10s left
-  setTimeout(() => { if (gameActive) document.body.classList.add('panic'); }, gameDuration - 10000);
+  // Panic mode at 15s left (earlier than before)
+  setTimeout(() => { if (gameActive) document.body.classList.add('panic'); }, gameDuration - 15000);
 
   setTimeout(endGame, gameDuration);
 }
@@ -723,7 +728,10 @@ function getRandomTask() {
 
 function spawnTask() {
   if (!gameActive) return;
-  if (activeCards.length >= 6) return;
+  const elapsed = Date.now() - gameStart;
+  const progress = Math.min(elapsed / gameDuration, 1);
+  const maxCards = Math.floor(6 + progress * 12); // grows from 6 → 18 over the game
+  if (activeCards.length >= maxCards) return;
 
   const boardRect = board.getBoundingClientRect();
   const cardW = 220, cardH = 130;
@@ -733,7 +741,7 @@ function spawnTask() {
   const y = margin + Math.random() * (boardRect.height - cardH - margin * 2);
 
   const taskData = getRandomTask();
-  const lifespan = 2500 + Math.random() * 1500;
+  const lifespan = Math.max(1000, 2500 - progress * 1200 + Math.random() * 600); // gets shorter as game progresses
 
   const card = document.createElement('div');
   card.className = 'task-card';
